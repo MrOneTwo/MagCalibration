@@ -39,6 +39,7 @@ serial_port.start()
 vertIndex = 0
 numberOfSamples = 10000
 sphereRadius = 50
+updating = True
 
 # #########################################################################
 # FUNCTIONS
@@ -51,40 +52,44 @@ def update():
     global pos3
     global vertIndex
 
-    if not queue_SRL_2_MAIN.empty() and vertIndex < numberOfSamples:
-        data = queue_SRL_2_MAIN.get()
-        queue_SRL_2_MAIN.task_done()
-        # normalize
-        vectorLength = math.sqrt(data[0] * data[0] +
-                                 data[1] * data[1] +
-                                 data[2] * data[2])
-        data[0] /= vectorLength
-        data[1] /= vectorLength
-        data[2] /= vectorLength
+    while 1:
+        if not updating:
+            break
 
-        # rescale
-        data[0] *= sphereRadius
-        data[1] *= sphereRadius
-        data[2] *= sphereRadius
+        if not queue_SRL_2_MAIN.empty() and vertIndex < numberOfSamples:
+            data = queue_SRL_2_MAIN.get()
+            queue_SRL_2_MAIN.task_done()
+            # normalize
+            vectorLength = math.sqrt(data[0] * data[0] +
+                                     data[1] * data[1] +
+                                     data[2] * data[2])
+            data[0] /= vectorLength
+            data[1] /= vectorLength
+            data[2] /= vectorLength
 
-        # make it a sphere
-        data[0] *= random.choice([-1, 1])
-        data[1] *= random.choice([-1, 1])
-        data[2] *= random.choice([-1, 1])
+            # rescale
+            data[0] *= sphereRadius
+            data[1] *= sphereRadius
+            data[2] *= sphereRadius
 
-        pos3[vertIndex][0] = data[0] / 10
-        pos3[vertIndex][1] = data[1] / 10
-        pos3[vertIndex][2] = data[2] / 10
+            # make it a sphere
+            data[0] *= random.choice([-1, 1])
+            data[1] *= random.choice([-1, 1])
+            data[2] *= random.choice([-1, 1])
 
-        color[vertIndex][0] = data[0] / 100
-        color[vertIndex][1] = data[1] / 100
-        color[vertIndex][2] = data[2] / 100
+            pos3[vertIndex][0] = data[0] / 10
+            pos3[vertIndex][1] = data[1] / 10
+            pos3[vertIndex][2] = data[2] / 10
 
-        sp3.setData(pos=pos3, color=color)
-        vertIndex += 1
-        print(data)
-    else:
-        pass
+            color[vertIndex][0] = data[0] / 100
+            color[vertIndex][1] = data[1] / 100
+            color[vertIndex][2] = data[2] / 100
+
+            sp3.setData(pos=pos3, color=color)
+            vertIndex += 1
+            print(data)
+        else:
+            pass
 
 
 def run_once(f):
@@ -127,11 +132,11 @@ w.addItem(sp3)
 
 # this needs to be here - after all this pyqt shit above
 # maybe not timer but thread so its faster
-t = QtCore.QTimer()
-t.timeout.connect(update)
-t.start(1)
-# t = Thread(target=update)
-# t.start()
+# t = QtCore.QTimer()
+# t.timeout.connect(update)
+# t.start(1)
+t = Thread(target=update)
+t.start()
 
 
 # #########################################################################
@@ -142,7 +147,7 @@ if __name__ == '__main__':
         if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
             QtGui.QApplication.instance().exec_()
         serial_port.stop()
-        # t.join()
+        t.join()
         sys.exit()
     except KeyboardInterrupt:
         serial_port.stop()

@@ -5,8 +5,10 @@ from threading import Thread
 import serial
 import time
 
-FRAME_SIZE = 4
-PREAMBLE = 0xAA
+FRAME_SIZE_BIN = 4
+FRAME_SIZE_2 = 4
+PREAMBLE_BIN = 0xAA
+PREAMBLE_2 = 'MAG.'
 
 
 class SerialCom():
@@ -18,11 +20,13 @@ class SerialCom():
         self.queueSRL = q
         self.data = 'a\n'
         self.timeout = 0
+        self.dataIsBinary = False
 
         self.t = Thread(target=self.update, args=())
 
     def start(self):
-        self.SP = serial.Serial('/dev/ttyACM0',
+        # self.SP = serial.Serial('/dev/ttyACM0',
+        self.SP = serial.Serial('COM5',
                                 self.BaudRate,
                                 timeout=5)
 
@@ -58,34 +62,48 @@ class SerialCom():
             c = 'a'
             data = list()
 
-            # read data if there is enough in buffer
-            if self.SP.in_waiting > FRAME_SIZE:
+            if self.dataIsBinary:
+                # read data if there is enough in buffer
+                if self.SP.in_waiting > FRAME_SIZE_BIN:
 
-                # block here until gets to preamble or timesout
-                while ord(c) != PREAMBLE:
-                    c = self.SP.read(1)
-                    # print('{0} : {1}'.format(ord(c), self.timeout))
-                    self.timeout += 1
-                    if self.timeout > 9000:
-                        break
+                    # block here until gets to PREAMBLE_BIN or timesout
+                    while ord(c) != PREAMBLE_BIN:
+                        c = self.SP.read(1)
+                        # print('{0} : {1}'.format(ord(c), self.timeout))
+                        self.timeout += 1
+                        if self.timeout > 9000:
+                            break
 
-                self.timeout = 0
+                    self.timeout = 0
 
-                # be sure data after preamble arrived
-                # if ord(c) == PREAMBLE:
-                #     while self.SP.in_waiting < 3:
-                #         self.timeout += 1
-                #         if self.timeout > 9000:
-                #             break
+                    for x in xrange(1, FRAME_SIZE_BIN):
+                        data.append(ord(self.SP.read(1)))
 
-                #     self.timeout = 0
+                    if self.queueSRL is not None:
+                        self.queueSRL.put(data)
+            elif not self.dataIsBinary:
+                # read data if there is enough in buffer
+                if self.SP.in_waiting > FRAME_SIZE_2:
 
-                # fill data with 3 bytes
-                # if self.SP.in_waiting == FRAME_SIZE - 1:
-                for x in xrange(1, FRAME_SIZE):
-                    data.append(ord(self.SP.read(1)))
+                    # block here until gets to PREAMBLE_BIN or timesout
+                    while c != PREAMBLE_2:
+                        c = self.SP.read(4)
+                        # print('{0} : {1}'.format(ord(c), self.timeout))
+                        self.timeout += 1
+                        if self.timeout > 9000:
+                            break
 
-                self.queueSRL.put(data)
+                    self.timeout = 0
+
+                    c = self.SP.read(28)
+                    c = c.strip()
+                    data = c.split('.')
+                    print(data)
+
+                    # data.append(ord(self.SP.read(29)))
+
+                    if self.queueSRL is not None:
+                        self.queueSRL.put(data)
 
         self.SP.close()
 
@@ -93,3 +111,11 @@ class SerialCom():
         self.SP.flush()
         self.SP.flushInput()
         return
+
+
+if __name__ == '__main__':
+    try:
+        serial_port = SerialCom(None)
+        serial_port.start()
+    except:
+        serial_port.stop()
