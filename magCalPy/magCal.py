@@ -28,18 +28,14 @@ import numpy as np
 # #########################################################################
 # VARS
 # #########################################################################
-
-
 data = list()
-queue_SRL_2_MAIN = Queue.Queue()
-
-serial_port = SerialCom(queue_SRL_2_MAIN)
-serial_port.start()
 
 vertIndex = 0
 numberOfSamples = 100000
 sphereRadius = 5
 updating = True
+
+fifoPath = '/tmp/serialPort.fifo'
 
 # #########################################################################
 # FUNCTIONS
@@ -56,44 +52,41 @@ def update():
         if not updating:
             break
 
-        if not queue_SRL_2_MAIN.empty():
-            if vertIndex < numberOfSamples:
-                data = queue_SRL_2_MAIN.get()
-                queue_SRL_2_MAIN.task_done()
-                # normalize
-                # vectorLength = math.sqrt(data[0] * data[0] +
-                #                          data[1] * data[1] +
-                #                          data[2] * data[2])
-                # data[0] /= vectorLength
-                # data[1] /= vectorLength
-                # data[2] /= vectorLength
+        if vertIndex < numberOfSamples:
 
-                # rescale
-                # data[0] *= sphereRadius
-                # data[1] *= sphereRadius
-                # data[2] *= sphereRadius
+            fifo = open(fifoPath, 'r')
+            for line in fifo:
+                line = line.strip()
+                data = line.split(';')
+                data = map(int, data)
+            fifo.close()
 
-                # make it a sphere
-                # data[0] *= random.choice([-1, 1])
-                # data[1] *= random.choice([-1, 1])
-                # data[2] *= random.choice([-1, 1])
+            # normalize
+            vectorLength = math.sqrt(data[0] * data[0] +
+                                     data[1] * data[1] +
+                                     data[2] * data[2])
+            data[0] /= vectorLength
+            data[1] /= vectorLength
+            data[2] /= vectorLength
 
-                pos3[vertIndex][0] = data[0]
-                pos3[vertIndex][1] = data[1]
-                pos3[vertIndex][2] = data[2]
+            # rescale
+            data[0] *= sphereRadius
+            data[1] *= sphereRadius
+            data[2] *= sphereRadius
 
-                color[vertIndex][0] = data[0] / 100
-                color[vertIndex][1] = data[1] / 100
-                color[vertIndex][2] = data[2] / 100
+            pos3[vertIndex][0] = data[0]
+            pos3[vertIndex][1] = data[1]
+            pos3[vertIndex][2] = data[2]
 
-                sp3.setData(pos=pos3, color=color)
-                vertIndex += 1
-                print(data)
-            else:
-                serial_port.stop()
-                break
+            color[vertIndex][0] = data[0] / 100
+            color[vertIndex][1] = data[1] / 100
+            color[vertIndex][2] = data[2] / 100
+
+            sp3.setData(pos=pos3, color=color)
+            vertIndex += 1
+            print(data)
         else:
-            pass
+            break
 
 
 def run_once(f):
@@ -138,8 +131,8 @@ w.addItem(sp3)
 # maybe not timer but thread so its faster
 # t = QtCore.QTimer()
 # t.timeout.connect(update)
-# t.start(1)
 t = Thread(target=update)
+t.daemon = True
 t.start()
 
 
@@ -150,9 +143,8 @@ if __name__ == '__main__':
     try:
         if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
             QtGui.QApplication.instance().exec_()
-        serial_port.stop()
         t.join()
         sys.exit()
     except:
-        serial_port.stop()
+        t.join()
         sys.exit()

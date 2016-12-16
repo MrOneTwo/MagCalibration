@@ -5,6 +5,8 @@ from threading import Thread
 import serial
 import time
 import signal
+import sys
+import os
 
 FRAME_SIZE_BIN = 4
 FRAME_SIZE_2 = 32
@@ -14,19 +16,25 @@ PREAMBLE_2 = 'M'
 
 class SerialCom():
     """docstring for CLInfo"""
-    def __init__(self, q):
+    def __init__(self, q=None):
         self.BaudRate = 115200
         self.running = True
         self.numericals = []
         self.queueSRL = q
+        self.fifo = None
         self.data = 'a\n'
         self.timeout = 0
         self.dataIsBinary = False
+        self.fifoPath = '/tmp/serialPort.fifo'
 
         self.t = Thread(target=self.update, args=())
 
     def start(self):
-        self.SP = serial.Serial('/dev/ttyUSB0',
+        try:
+            self.fifo = os.mkfifo(self.fifoPath)
+        except:
+            pass
+        self.SP = serial.Serial('/dev/ttyUSB1',
         # self.SP = serial.Serial('COM5',
                                 self.BaudRate,
                                 timeout=5)
@@ -116,10 +124,19 @@ class SerialCom():
 
                     # data.append(ord(self.SP.read(29)))
 
-                    if self.queueSRL is not None:
-                        self.queueSRL.put(data)
-                    else:
-                        print(data)
+                    # if self.queueSRL is not None:
+                    #     self.queueSRL.put(data)
+                    # else:
+                    #     print(data)
+
+                    self.fifo = open(self.fifoPath, 'w')
+                    self.fifo.write(str(data[0]))
+                    self.fifo.write(';')
+                    self.fifo.write(str(data[1]))
+                    self.fifo.write(';')
+                    self.fifo.write(str(data[2]))
+                    self.fifo.write('\n')
+                    self.fifo.close()
 
         self.SP.close()
 
@@ -130,10 +147,15 @@ class SerialCom():
 
 
 if __name__ == '__main__':
+    # BaudRate = 115200
+    # SP = serial.Serial('/dev/ttyUSB1',
+    #                    BaudRate,
+    #                    timeout=5)
     try:
         serial_port = SerialCom(None)
         serial_port.start()
         while 1:
             continue
-    except:
+    except Exception as e:
+        print(e)
         serial_port.stop()
