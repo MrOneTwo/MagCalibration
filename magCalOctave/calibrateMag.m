@@ -10,7 +10,7 @@ function [ret1, ret2] = calibrateMag(portNr = 0)
        endif
 
 
-       serialPort = serial("\\\\.\\COM5")
+       serialPort = serial("/dev/ttyUSB0")
        pause(1);
 
        set(serialPort, 'baudrate', 115200);
@@ -33,7 +33,7 @@ function [ret1, ret2] = calibrateMag(portNr = 0)
 
               inBufferSTR = ReadToTermination(serialPort);
               inBufferSTR_splitted = strsplit(inBufferSTR, ".");
-              disp(inBufferSTR);
+              % disp(inBufferSTR);
 
               if(size(inBufferSTR_splitted) == [1, 4])
                      if(strcmp(inBufferSTR_splitted{1}, 'MAG') == 0 || strcmp(inBufferSTR_splitted{1}, 'ZMAG') == 0)
@@ -48,7 +48,7 @@ function [ret1, ret2] = calibrateMag(portNr = 0)
        endwhile
        fclose(serialPort);
 
-       disp(notCalibratedData);
+       % disp(notCalibratedData);
        disp('Finished acquiring data.')
 
        AxisLim = 6000;
@@ -78,21 +78,22 @@ function [ret1, ret2] = calibrateMag(portNr = 0)
 
        middleNOCAL = [(xNOCAL_min + xNOCAL_max)/2, (yNOCAL_min + yNOCAL_max)/2, (zNOCAL_min + zNOCAL_max)/2];
        scatter3(middleNOCAL(:,1), middleNOCAL(:,2), middleNOCAL(:,3), 4, [0.4, 1, 0.4], '*');
-       % txt1 = '\leftarrow middle point';
-       % % text(x3,y3,txt3,'HorizontalAlignment','right')
 
-       % meanNOCAL = mean(magDumpNOCAL);
-       % scatter3(meanNOCAL(:,1), meanNOCAL(:,2), meanNOCAL(:,3), 4, [1, 0.4, 0.4], 's');
-       % txt2 = '\leftarrow middle point';
-
-
+       set(gcf(), "visible", "off")
        print -dpng 'imgs/nocal.png';
+       set(gcf(), "visible", "on")
        view([0 0]);
+       set(gcf(), "visible", "off")
        print -dpng 'imgs/nocal_XY.png';
+       set(gcf(), "visible", "on")
        view([90 0]);
+       set(gcf(), "visible", "off")
        print -dpng 'imgs/nocal_XZ.png';
+       set(gcf(), "visible", "on")
        view([0 90]);
+       set(gcf(), "visible", "off")
        print -dpng 'imgs/nocal_YZ.png';
+       set(gcf(), "visible", "on")
 
        calibratedData = notCalibratedData - middleNOCAL(ones(size(notCalibratedData,1),1),:);
        figure(2)
@@ -117,13 +118,21 @@ function [ret1, ret2] = calibrateMag(portNr = 0)
        % yCAL_max = max(yCAL);
        % zCAL_max = max(zCAL);
 
+       set(gcf(), "visible", "off")
        print -dpng 'imgs/cal.png';
+       set(gcf(), "visible", "on")
        view([0 0]);
+       set(gcf(), "visible", "off")
        print -dpng 'imgs/cal_XZ.png';
+       set(gcf(), "visible", "on")
        view([90 0]);
+       set(gcf(), "visible", "off")
        print -dpng 'imgs/cal_YZ.png';
+       set(gcf(), "visible", "on")
        view([0 90]);
+       set(gcf(), "visible", "off")
        print -dpng 'imgs/cal_XY.png';
+       set(gcf(), "visible", "on")
 
        % printf('%020s: %04s:%05d, %04s:%05d, %04s:%05d, %04s:%05d, %04s:%05d, %04s:%05d \r\n',
        %        'NOCAL',

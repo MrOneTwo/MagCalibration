@@ -107,8 +107,12 @@ class SerialCom():
                     # read the data
                     c = self.SP.read(28)
                     c = c.strip()
-                    data = c.split('.')
-                    data = map(int, data)
+
+                    try:
+                        data = c.split('.')
+                        data = map(int, data)
+                    except:
+                        continue
 
                     # data.append(ord(self.SP.read(29)))
 

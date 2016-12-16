@@ -61,17 +61,17 @@ def update():
                 data = queue_SRL_2_MAIN.get()
                 queue_SRL_2_MAIN.task_done()
                 # normalize
-                vectorLength = math.sqrt(data[0] * data[0] +
-                                         data[1] * data[1] +
-                                         data[2] * data[2])
-                data[0] /= vectorLength
-                data[1] /= vectorLength
-                data[2] /= vectorLength
+                # vectorLength = math.sqrt(data[0] * data[0] +
+                #                          data[1] * data[1] +
+                #                          data[2] * data[2])
+                # data[0] /= vectorLength
+                # data[1] /= vectorLength
+                # data[2] /= vectorLength
 
                 # rescale
-                data[0] *= sphereRadius
-                data[1] *= sphereRadius
-                data[2] *= sphereRadius
+                # data[0] *= sphereRadius
+                # data[1] *= sphereRadius
+                # data[2] *= sphereRadius
 
                 # make it a sphere
                 # data[0] *= random.choice([-1, 1])
