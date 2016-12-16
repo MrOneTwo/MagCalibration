@@ -37,8 +37,8 @@ serial_port = SerialCom(queue_SRL_2_MAIN)
 serial_port.start()
 
 vertIndex = 0
-numberOfSamples = 10000
-sphereRadius = 50
+numberOfSamples = 100000
+sphereRadius = 5
 updating = True
 
 # #########################################################################
@@ -56,38 +56,42 @@ def update():
         if not updating:
             break
 
-        if not queue_SRL_2_MAIN.empty() and vertIndex < numberOfSamples:
-            data = queue_SRL_2_MAIN.get()
-            queue_SRL_2_MAIN.task_done()
-            # normalize
-            vectorLength = math.sqrt(data[0] * data[0] +
-                                     data[1] * data[1] +
-                                     data[2] * data[2])
-            data[0] /= vectorLength
-            data[1] /= vectorLength
-            data[2] /= vectorLength
+        if not queue_SRL_2_MAIN.empty():
+            if vertIndex < numberOfSamples:
+                data = queue_SRL_2_MAIN.get()
+                queue_SRL_2_MAIN.task_done()
+                # normalize
+                vectorLength = math.sqrt(data[0] * data[0] +
+                                         data[1] * data[1] +
+                                         data[2] * data[2])
+                data[0] /= vectorLength
+                data[1] /= vectorLength
+                data[2] /= vectorLength
 
-            # rescale
-            data[0] *= sphereRadius
-            data[1] *= sphereRadius
-            data[2] *= sphereRadius
+                # rescale
+                data[0] *= sphereRadius
+                data[1] *= sphereRadius
+                data[2] *= sphereRadius
 
-            # make it a sphere
-            data[0] *= random.choice([-1, 1])
-            data[1] *= random.choice([-1, 1])
-            data[2] *= random.choice([-1, 1])
+                # make it a sphere
+                # data[0] *= random.choice([-1, 1])
+                # data[1] *= random.choice([-1, 1])
+                # data[2] *= random.choice([-1, 1])
 
-            pos3[vertIndex][0] = data[0] / 10
-            pos3[vertIndex][1] = data[1] / 10
-            pos3[vertIndex][2] = data[2] / 10
+                pos3[vertIndex][0] = data[0]
+                pos3[vertIndex][1] = data[1]
+                pos3[vertIndex][2] = data[2]
 
-            color[vertIndex][0] = data[0] / 100
-            color[vertIndex][1] = data[1] / 100
-            color[vertIndex][2] = data[2] / 100
+                color[vertIndex][0] = data[0] / 100
+                color[vertIndex][1] = data[1] / 100
+                color[vertIndex][2] = data[2] / 100
 
-            sp3.setData(pos=pos3, color=color)
-            vertIndex += 1
-            print(data)
+                sp3.setData(pos=pos3, color=color)
+                vertIndex += 1
+                print(data)
+            else:
+                serial_port.stop()
+                break
         else:
             pass
 
@@ -124,7 +128,7 @@ pos3 = np.zeros((numberOfSamples, 3))
 color = np.ones((numberOfSamples, 4))
 
 sp3 = gl.GLScatterPlotItem(pos=pos3,
-                           color=(1, 1, 1, .6),
+                           color=(1, 1, 1, .7),
                            size=0.1,
                            pxMode=False)
 
@@ -149,6 +153,6 @@ if __name__ == '__main__':
         serial_port.stop()
         t.join()
         sys.exit()
-    except KeyboardInterrupt:
+    except:
         serial_port.stop()
         sys.exit()

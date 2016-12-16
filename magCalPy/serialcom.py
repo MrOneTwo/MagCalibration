@@ -4,11 +4,12 @@
 from threading import Thread
 import serial
 import time
+import signal
 
 FRAME_SIZE_BIN = 4
-FRAME_SIZE_2 = 4
+FRAME_SIZE_2 = 32
 PREAMBLE_BIN = 0xAA
-PREAMBLE_2 = 'MAG.'
+PREAMBLE_2 = 'M'
 
 
 class SerialCom():
@@ -25,8 +26,8 @@ class SerialCom():
         self.t = Thread(target=self.update, args=())
 
     def start(self):
-        # self.SP = serial.Serial('/dev/ttyACM0',
-        self.SP = serial.Serial('COM5',
+        self.SP = serial.Serial('/dev/ttyUSB0',
+        # self.SP = serial.Serial('COM5',
                                 self.BaudRate,
                                 timeout=5)
 
@@ -34,13 +35,18 @@ class SerialCom():
             try:
                 self.SP.open()
             except serial.SerialException:
-                pass
+                print('Serial port opening failed.')
+                return
 
         self.SP.flush()
         self.SP.flushInput()
 
         self.t = Thread(target=self.update, args=())
-        # self.t.daemon = True
+
+        # deamon so the ctrl + c works ok
+        # if self.queueSRL is None:
+        self.t.daemon = True
+
         self.t.start()
         return self
 
@@ -81,13 +87,14 @@ class SerialCom():
 
                     if self.queueSRL is not None:
                         self.queueSRL.put(data)
+
             elif not self.dataIsBinary:
                 # read data if there is enough in buffer
                 if self.SP.in_waiting > FRAME_SIZE_2:
 
                     # block here until gets to PREAMBLE_BIN or timesout
                     while c != PREAMBLE_2:
-                        c = self.SP.read(4)
+                        c = self.SP.read(1)
                         # print('{0} : {1}'.format(ord(c), self.timeout))
                         self.timeout += 1
                         if self.timeout > 9000:
@@ -95,15 +102,20 @@ class SerialCom():
 
                     self.timeout = 0
 
+                    # get rid of 'AG.'
+                    c = self.SP.read(3)
+                    # read the data
                     c = self.SP.read(28)
                     c = c.strip()
                     data = c.split('.')
-                    print(data)
+                    data = map(int, data)
 
                     # data.append(ord(self.SP.read(29)))
 
                     if self.queueSRL is not None:
                         self.queueSRL.put(data)
+                    else:
+                        print(data)
 
         self.SP.close()
 
@@ -117,5 +129,7 @@ if __name__ == '__main__':
     try:
         serial_port = SerialCom(None)
         serial_port.start()
+        while 1:
+            continue
     except:
         serial_port.stop()
