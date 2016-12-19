@@ -35,8 +35,6 @@ numberOfSamples = 100000
 sphereRadius = 5
 updating = True
 
-fifoPath = '/tmp/serialPort.fifo'
-
 # #########################################################################
 # FUNCTIONS
 # #########################################################################
@@ -53,13 +51,6 @@ def update():
             break
 
         if vertIndex < numberOfSamples:
-
-            fifo = open(fifoPath, 'r')
-            for line in fifo:
-                line = line.strip()
-                data = line.split(';')
-                data = map(int, data)
-            fifo.close()
 
             # normalize
             vectorLength = math.sqrt(data[0] * data[0] +

@@ -16,25 +16,23 @@ PREAMBLE_2 = 'M'
 
 class SerialCom():
     """docstring for CLInfo"""
-    def __init__(self, q=None):
+    def __init__(self):
         self.BaudRate = 115200
         self.running = True
         self.numericals = []
-        self.queueSRL = q
         self.fifo = None
         self.data = 'a\n'
         self.timeout = 0
         self.dataIsBinary = False
         self.fifoPath = '/tmp/serialPort.fifo'
 
-        self.t = Thread(target=self.update, args=())
-
     def start(self):
         try:
             self.fifo = os.mkfifo(self.fifoPath)
         except:
             pass
-        self.SP = serial.Serial('/dev/ttyUSB1',
+        self.SP = serial.Serial('/dev/sensor_uart',  # after adding rule in /etc/udev/rules.d
+        # self.SP = serial.Serial('/dev/ttyUSB0',
         # self.SP = serial.Serial('COM5',
                                 self.BaudRate,
                                 timeout=5)
@@ -46,22 +44,20 @@ class SerialCom():
                 print('Serial port opening failed.')
                 return
 
+        # be sure the sensor is in the right mode
+        n = 0
+        while n < 1000:
+            self.SP.write('zmag\n')
+            n += 1
+
         self.SP.flush()
         self.SP.flushInput()
 
-        self.t = Thread(target=self.update, args=())
-
-        # deamon so the ctrl + c works ok
-        # if self.queueSRL is None:
-        self.t.daemon = True
-
-        self.t.start()
         return self
 
     def stop(self):
         self.running = False
         # join means wait here for the thread to end
-        self.t.join()
         return
 
     def update(self):
@@ -122,13 +118,6 @@ class SerialCom():
                     except:
                         continue
 
-                    # data.append(ord(self.SP.read(29)))
-
-                    # if self.queueSRL is not None:
-                    #     self.queueSRL.put(data)
-                    # else:
-                    #     print(data)
-
                     self.fifo = open(self.fifoPath, 'w')
                     self.fifo.write(str(data[0]))
                     self.fifo.write(';')
@@ -147,15 +136,11 @@ class SerialCom():
 
 
 if __name__ == '__main__':
-    # BaudRate = 115200
-    # SP = serial.Serial('/dev/ttyUSB1',
-    #                    BaudRate,
-    #                    timeout=5)
     try:
-        serial_port = SerialCom(None)
+        serial_port = SerialCom()
         serial_port.start()
         while 1:
-            continue
+            serial_port.update()
     except Exception as e:
-        print(e)
+        print('---- Exception : {0}'.format(e))
         serial_port.stop()
