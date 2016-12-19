@@ -102,21 +102,31 @@ def update():
                                      drawData[1] * drawData[1] +
                                      drawData[2] * drawData[2])
 
+            # color and discard invalid points
             if vectorLength > 3.1 + 0.1 * 3.1:
                 colorPoints[vertIndex][0] = 1
                 colorPoints[vertIndex][1] = 0
                 colorPoints[vertIndex][2] = 0
+                data.pop()
             if vectorLength < 3.1 - 0.1 * 3.1:
                 colorPoints[vertIndex][0] = 0
                 colorPoints[vertIndex][1] = 0
                 colorPoints[vertIndex][2] = 1
+                data.pop()
 
             sp3.setData(pos=posPoints, color=colorPoints)
             posAvg[0] = sphereRadius * calculateCalib(data)
             sp2.setData(pos=posAvg)
             vertIndex += 1
             formattedList = ['%.3f' % elem for elem in drawData]
-            print('Data: {0} - Idx: {1:06} - R_avg: {2:03}'.format(formattedList, vertIndex, 0))
+            print('Data: {0} - Idx: {1:06} - R_avg: {2:03} - =zmag=[{3:08},{4:08},{5:08}]'
+                  .format(formattedList,
+                          vertIndex,
+                          0,
+                          int(calculateCalib(data)[0]),
+                          int(calculateCalib(data)[1]),
+                          int(calculateCalib(data)[2])))
+
         else:
             updating = False
 
@@ -131,19 +141,22 @@ def run_once(f):
 
 
 def calculateCalib(unCalVals):
-    Xs = [row[0] for row in unCalVals]
-    Ys = [row[1] for row in unCalVals]
-    Zs = [row[2] for row in unCalVals]
-    avgX = ((max(Xs) - min(Xs)) / 2) + min(Xs)
-    avgY = ((max(Ys) - min(Ys)) / 2) + min(Ys)
-    avgZ = ((max(Zs) - min(Zs)) / 2) + min(Zs)
-    # print('Mag. calibration vals. - [{0:08},{1:08},{2:08}]'.format(-1 * int(avgX),
-    #                                                                -1 * int(avgY),
-    #                                                                -1 * int(avgZ)))
-    # print('=zmag=[{0:08},{1:08},{2:08}]'.format(-1 * int(avgX),
-    #                                             -1 * int(avgY),
-    #                                             -1 * int(avgZ)))
-    return np.array([avgX, avgY, avgZ])
+    if len(unCalVals) > 0:
+        Xs = [row[0] for row in unCalVals]
+        Ys = [row[1] for row in unCalVals]
+        Zs = [row[2] for row in unCalVals]
+        avgX = ((max(Xs) - min(Xs)) / 2) + min(Xs)
+        avgY = ((max(Ys) - min(Ys)) / 2) + min(Ys)
+        avgZ = ((max(Zs) - min(Zs)) / 2) + min(Zs)
+        # print('Mag. calibration vals. - [{0:08},{1:08},{2:08}]'.format(-1 * int(avgX),
+        #                                                                -1 * int(avgY),
+        #                                                                -1 * int(avgZ)))
+        # print('=zmag=[{0:08},{1:08},{2:08}]'.format(-1 * int(avgX),
+        #                                             -1 * int(avgY),
+        #                                             -1 * int(avgZ)))
+        return np.array([avgX, avgY, avgZ])
+    else:
+        return np.array([0, 0, 0])
 
 
 def averageColumn(lst, idx):
