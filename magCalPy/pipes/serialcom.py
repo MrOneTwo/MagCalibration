@@ -47,7 +47,7 @@ class SerialCom():
         # be sure the sensor is in the right mode
         n = 0
         while n < 1000:
-            self.SP.write('zmag\n')
+            self.SP.write('mag\n')
             n += 1
 
         self.SP.flush()
@@ -118,6 +118,7 @@ class SerialCom():
                     except:
                         continue
 
+                    print('Data = {0}'.format(data))
                     self.fifo = open(self.fifoPath, 'w')
                     self.fifo.write(str(data[0]))
                     self.fifo.write(';')
