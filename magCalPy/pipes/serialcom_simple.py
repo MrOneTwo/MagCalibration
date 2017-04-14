@@ -1,11 +1,8 @@
 #!python2
 # -*- coding: UTF-8 -*-
 
-from threading import Thread
 import serial
 import time
-import signal
-import sys
 import os
 
 FRAME_SIZE_BIN = 4
@@ -30,6 +27,7 @@ serial_port = serial.Serial('/dev/sensor_uart',
                             baud_rate,
                             timeout=0.5)
 
+
 def start():
     """TODO: Docstring for start.
     :returns: TODO
@@ -47,6 +45,7 @@ def start():
 
     return True
 
+
 def main():
     """TODO: Docstring for main.
     :returns: TODO
@@ -57,8 +56,8 @@ def main():
 
     # n = 0
     # while n < 1000:
-        # serial_port.write('mag\n')
-        # n += 1
+    # serial_port.write('mag\n')
+    # n += 1
 
     while running:
         # clear data
@@ -67,7 +66,7 @@ def main():
         data = list()
 
         c = serial_port.read(1)
-        
+      
         if c == PREAMBLE_2:
             d = serial_port.read(31)
 
@@ -95,7 +94,7 @@ def main():
 
 if __name__ == '__main__':
     try:
-        if start() == True:
+        if start() is True:
             main()
     except Exception as e:
         print(' -ex--->  Exception, being: {0}'.format(e))
