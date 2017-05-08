@@ -9,6 +9,7 @@ FRAME_SIZE_BIN = 4
 FRAME_SIZE_2 = 32
 PREAMBLE_BIN = 0xAA
 PREAMBLE_2 = 'M'
+PREAMBLE_3 = 'A'
 
 baud_rate = 115200
 fifo_file = None
@@ -58,38 +59,46 @@ def main():
     # while n < 1000:
     # serial_port.write('mag\n')
     # n += 1
+    preamble_character = ''
 
     while running:
         # clear data
-        c = 'a'
-        d = 'a'
+        data_bytes = ''
         data = list()
 
-        c = serial_port.read(1)
-      
-        if c == PREAMBLE_2:
-            d = serial_port.read(31)
+        if serial_port.in_waiting > 0 and preamble_character != PREAMBLE_2 and preamble_character != PREAMBLE_3:
+            preamble_character = serial_port.read(1)
+        else:
+            pass
+
+        if (preamble_character == PREAMBLE_2 or preamble_character == PREAMBLE_3) and serial_port.in_waiting >= 31:
+            preamble_character = ''
+            data_bytes = serial_port.read(31)
 
         # get rid of 'AG.'
-        d = d[3:]
+        data_bytes = data_bytes[3:]
         # read the data
-        d = d.strip()
+        data_bytes = data_bytes.strip()
 
         try:
-            data = d.split('.')
+            data = data_bytes.split('.')
             data = map(int, data)
         except:
             continue
 
         print('Data = {0}'.format(data))
-        fifo_file = open(fifo_file_path, 'w')
-        fifo_file.write(str(data[0]))
-        fifo_file.write(';')
-        fifo_file.write(str(data[1]))
-        fifo_file.write(';')
-        fifo_file.write(str(data[2]))
-        fifo_file.write('\n')
-        fifo_file.close()
+        try:
+            fifo_file = open(fifo_file_path, 'w')
+            fifo_file.write(str(data[0]))
+            fifo_file.write(';')
+            fifo_file.write(str(data[1]))
+            fifo_file.write(';')
+            fifo_file.write(str(data[2]))
+            fifo_file.write('\n')
+            fifo_file.close()
+        except IOError as e:
+            fifo_file.close()
+            pass
 
 
 if __name__ == '__main__':
