@@ -45,10 +45,10 @@ class SerialCom():
                 return
 
         # be sure the sensor is in the right mode
-        n = 0
-        while n < 1000:
-            self.SP.write('mag\n')
-            n += 1
+        #  n = 0
+        #  while n < 1000:
+            #  self.SP.write('mag\n')
+            #  n += 1
 
         self.SP.flush()
         self.SP.flushInput()
@@ -118,15 +118,18 @@ class SerialCom():
                     except:
                         continue
 
-                    print('Data = {0}'.format(data))
-                    self.fifo = open(self.fifoPath, 'w')
-                    self.fifo.write(str(data[0]))
-                    self.fifo.write(';')
-                    self.fifo.write(str(data[1]))
-                    self.fifo.write(';')
-                    self.fifo.write(str(data[2]))
-                    self.fifo.write('\n')
-                    self.fifo.close()
+                    try:
+                        print('Data = {0}'.format(data))
+                        self.fifo = open(self.fifoPath, 'w')
+                        self.fifo.write(str(data[0]))
+                        self.fifo.write(';')
+                        self.fifo.write(str(data[1]))
+                        self.fifo.write(';')
+                        self.fifo.write(str(data[2]))
+                        self.fifo.write('\n')
+                        self.fifo.close()
+                    except IOError as e:
+                        continue
 
         self.SP.close()
 
