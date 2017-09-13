@@ -24,7 +24,7 @@ except OSError as e:
         print(' -ex--->  Fifo file exists.')
         pass
 
-serial_port = serial.Serial('/dev/sensor_uart',
+serial_port = serial.Serial('/dev/ttyUSB0',
                             baud_rate,
                             timeout=0.5)
 
@@ -37,7 +37,7 @@ def start():
 
     try:
         serial_port.close()
-        print('Trying to open the port which is opened: {0}'.format(serial_port.is_open))
+        print("Trying to open the port which is opened: {0}".format(serial_port.is_open))
         time.sleep(2)
         serial_port.open()
     except Exception as e:
@@ -66,12 +66,16 @@ def main():
         data_bytes = ''
         data = list()
 
-        if serial_port.in_waiting > 0 and preamble_character != PREAMBLE_2 and preamble_character != PREAMBLE_3:
+        if serial_port.in_waiting > 0 and \
+           preamble_character != PREAMBLE_2 and \
+           preamble_character != PREAMBLE_3:
             preamble_character = serial_port.read(1)
         else:
             pass
 
-        if (preamble_character == PREAMBLE_2 or preamble_character == PREAMBLE_3) and serial_port.in_waiting >= 31:
+        if (preamble_character == PREAMBLE_2 or
+                preamble_character == PREAMBLE_3) and \
+                serial_port.in_waiting >= 31:
             preamble_character = ''
             data_bytes = serial_port.read(31)
 
@@ -108,4 +112,3 @@ if __name__ == '__main__':
     except Exception as e:
         print(' -ex--->  Exception, being: {0}'.format(e))
         serial_port.close()
-

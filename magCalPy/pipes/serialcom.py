@@ -31,8 +31,8 @@ class SerialCom():
             self.fifo = os.mkfifo(self.fifoPath)
         except:
             pass
-        self.SP = serial.Serial('/dev/sensor_uart',  # after adding rule in /etc/udev/rules.d
-        # self.SP = serial.Serial('/dev/ttyUSB0',
+        # self.SP = serial.Serial('/dev/sensor_uart',  # after adding rule in /etc/udev/rules.d
+        self.SP = serial.Serial('/dev/ttyUSB0',
         # self.SP = serial.Serial('COM5',
                                 self.BaudRate,
                                 timeout=5)
